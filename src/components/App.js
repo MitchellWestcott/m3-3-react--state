@@ -7,55 +7,73 @@ import DeadLetters from "./DeadLetters";
 import TheWord from "./TheWord";
 import Keyboard from "./Keyboard";
 import GameOverModal from "./GameOverModal";
-import {useState} from 'react';
+import { useState } from "react";
 import { colors, contentWidth } from "./GlobalStyles";
 import words from "../data/words.json";
 
-const initialGameState = { started: false, over: false, win: false, paused: false };
+const initialGameState = {
+  started: false,
+  over: false,
+  win: false,
+  paused: false,
+};
 
 const App = () => {
   const [game, setGame] = useState(initialGameState);
-  const [word, setWord] = useState({str:""});
+  const [word, setWord] = useState({ str: "" });
   const [wrongGuesses, setWrongGuesses] = useState([]);
   const [usedLetters, setUsedLetters] = useState([]);
 
   const handleStart = () => {
-    ((!game.started) ? setGame({...game, started: !game.started}) : setGame({...game, paused: !game.paused}))
-    if (!word.str){getNewWord()};
+    !game.started
+      ? setGame({ ...game, started: !game.started })
+      : setGame({ ...game, paused: !game.paused });
+    if (!word.str) {
+      getNewWord();
+    }
   };
-  
+
   const handleRestart = () => {
     getNewWord();
     setWrongGuesses([]);
     setUsedLetters([]);
-    setGame({...initialGameState, started: true});
-  }
-
-  const Game = (win) => {
-    setGame({...game, over: true, win: true})
+    setGame({ ...initialGameState, started: true });
   };
 
+  const handleEndGame = (win) => {
+    setGame({ ...game, over: true, win: true });
+    alert(`Game Over! You ${win ? "win" : "lose"}`);
+  };
 
   const handleGuess = (letter) => {
     const splitWord = word.str.split("");
     setUsedLetters([...usedLetters, letter]);
     // console.log(letter);
 
-    if(splitWord.includes(letter)) {
+    if (splitWord.includes(letter)) {
       // console.log("hit")
+      const newWord = { ...word };
       splitWord.forEach((w, index) => {
-        if(letter === w) {
-          const newWord = {...word};
+        if (letter === w) {
           newWord.revealed[index] = letter;
           setWord(newWord);
-            }
-            })} else {
-              const newWrongGuess = [...wrongGuesses];
-              newWrongGuess.push(letter);
-              setWrongGuesses(newWrongGuess);
-  }
-}
-  
+        }
+      });
+      //check if newWord.join("") === word.str
+      if (newWord.revealed.join("") === word.str) {
+        handleEndGame(true);
+      }
+    } else {
+      const newWrongGuess = [...wrongGuesses];
+      newWrongGuess.push(letter);
+      setWrongGuesses(newWrongGuess);
+      // check if newWrongGuess.length >=10
+      if (newWrongGuess.length >= 10) {
+        handleEndGame(false);
+      }
+    }
+  };
+
   const getNewWord = () => {
     const randomWord = words[Math.floor(Math.random() * words.length)];
     const revealed = [];
@@ -64,12 +82,10 @@ const App = () => {
       revealed.push("");
     }
 
-    setWord(
-        {
-        str: randomWord,
-        revealed: revealed
-        }
-    )
+    setWord({
+      str: randomWord,
+      revealed: revealed,
+    });
   };
 
   return (
@@ -77,20 +93,22 @@ const App = () => {
       {/* <GameOverModal /> */}
       <Header />
       <Nav>
-        <Button onClickFunc={handleStart}>{game.started ? (!game.paused ? "Pause" : "Continue") : "Start"}</Button>
+        <Button onClickFunc={handleStart}>
+          {game.started ? (!game.paused ? "Pause" : "Continue") : "Start"}
+        </Button>
         <Button onClickFunc={handleRestart}>Reset</Button>
       </Nav>
       {game.started && (
-      <>
-        <Container>
-          <Deadman />
-          <RightColumn>
-            <DeadLetters wrongGuesses = {wrongGuesses}/>
-            <TheWord word = {word}/>
-          </RightColumn>
-        </Container>
-        <Keyboard usedLetters = {usedLetters} handleGuess={handleGuess}/>
-      </>
+        <>
+          <Container>
+            <Deadman />
+            <RightColumn>
+              <DeadLetters wrongGuesses={wrongGuesses} />
+              <TheWord word={word} />
+            </RightColumn>
+          </Container>
+          <Keyboard usedLetters={usedLetters} handleGuess={handleGuess} />
+        </>
       )}
     </Wrapper>
   );
