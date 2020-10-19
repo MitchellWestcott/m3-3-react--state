@@ -7,28 +7,91 @@ import DeadLetters from "./DeadLetters";
 import TheWord from "./TheWord";
 import Keyboard from "./Keyboard";
 import GameOverModal from "./GameOverModal";
-
+import {useState} from 'react';
 import { colors, contentWidth } from "./GlobalStyles";
+import words from "../data/words.json";
+
+const initialGameState = { started: false, over: false, win: false, paused: false };
 
 const App = () => {
+  const [game, setGame] = useState(initialGameState);
+  const [word, setWord] = useState({str:""});
+  const [wrongGuesses, setWrongGuesses] = useState([]);
+  const [usedLetters, setUsedLetters] = useState([]);
+
+  const handleStart = () => {
+    ((!game.started) ? setGame({...game, started: !game.started}) : setGame({...game, paused: !game.paused}))
+    if (!word.str){getNewWord()};
+  };
+  
+  const handleRestart = () => {
+    getNewWord();
+    setWrongGuesses([]);
+    setUsedLetters([]);
+    setGame({...initialGameState, started: true});
+  }
+
+  const Game = (win) => {
+    setGame({...game, over: true, win: true})
+  };
+
+
+  const handleGuess = (letter) => {
+    const splitWord = word.str.split("");
+    setUsedLetters([...usedLetters, letter]);
+    // console.log(letter);
+
+    if(splitWord.includes(letter)) {
+      // console.log("hit")
+      splitWord.forEach((w, index) => {
+        if(letter === w) {
+          const newWord = {...word};
+          newWord.revealed[index] = letter;
+          setWord(newWord);
+            }
+            })} else {
+              const newWrongGuess = [...wrongGuesses];
+              newWrongGuess.push(letter);
+              setWrongGuesses(newWrongGuess);
+  }
+}
+  
+  const getNewWord = () => {
+    const randomWord = words[Math.floor(Math.random() * words.length)];
+    const revealed = [];
+
+    for (let i = 0; i < randomWord.length; i++) {
+      revealed.push("");
+    }
+
+    setWord(
+        {
+        str: randomWord,
+        revealed: revealed
+        }
+    )
+  };
+
   return (
     <Wrapper>
       {/* <GameOverModal /> */}
       <Header />
       <Nav>
-        <Button>btn 1</Button>
-        <Button>btn 2</Button>
+        <Button onClickFunc={handleStart}>{game.started ? (!game.paused ? "Pause" : "Continue") : "Start"}</Button>
+        <Button onClickFunc={handleRestart}>Reset</Button>
       </Nav>
+      {game.started && (
       <>
         <Container>
           <Deadman />
           <RightColumn>
-            <DeadLetters />
-            <TheWord />
+            <DeadLetters wrongGuesses = {wrongGuesses}/>
+            <TheWord word = {word}/>
           </RightColumn>
         </Container>
-        <Keyboard />
+        <Keyboard usedLetters = {usedLetters} handleGuess={handleGuess}/>
       </>
+      )}
     </Wrapper>
   );
 };

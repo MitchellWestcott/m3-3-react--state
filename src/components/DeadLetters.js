@@ -3,11 +3,16 @@ import styled from "styled-components";
 
 import { colors } from "./GlobalStyles";
 
-const DeadLetters = ({}) => {
+const DeadLetters = (props) => {
+  const {wrongGuesses} = props
   return (
     <Wrapper>
       <h2>Dead Letters</h2>
-      <List></List>
+      <List>
+        {wrongGuesses.map((guess) => (
+          <Letter>{guess}</Letter>
+        ))}
+      </List>
     </Wrapper>
   );
 };
